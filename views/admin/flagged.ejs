@@ -1,0 +1,19 @@
+<h2>Flagged Users Monitoring Panel</h2>
+
+<table borer="1" cellpadding="10">
+  <tr>
+    <th>Username</th>
+    <th>Email</th>
+    <th>IP Address</th>
+    <th>Suspicion Score</th>
+  </tr>
+
+  <% for(let user of flaggedUsers){ %>
+    <tr>
+      <td><%= user.username %></td>
+      <td><%= user.email %></td>
+      <td><%= user.ipAddress %></td>
+      <td><%= user.suspicionScore %></td>
+    </tr>
+  <% } %>
+</table>
