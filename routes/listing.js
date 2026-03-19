@@ -30,7 +30,7 @@ router
   .get(wrapAsync(listingController.index))
   .post(
     isLoggedIn,
-    upload.single('listing[image][url]'), // Multer data parse karega
+    upload.single('listing[image]'), // Multer data parse karega
     wrapAsync(listingController.createListing)
     // (req, res) => {
     //   res.send(req.file); // Ab yahan data dikhega!
@@ -49,7 +49,7 @@ router
   .put(
     isLoggedIn,
     isOwner,
-    upload.single('listing[image][url]'), // Multer data parse karega
+    upload.single('listing[image]'), // Multer data parse karega
     validateListing,
     wrapAsync(listingController.updateListing)
   )

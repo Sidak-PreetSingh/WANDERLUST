@@ -3,39 +3,33 @@ const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 
+// 1. INDEX ROUTE (Search + Category Filter)
 module.exports.index = async (req, res) => {
-  let { category, search } = req.query;
-  console.log("Search:", search);
-  let query = {};
+    let { category, search } = req.query;
+    let filter = {};
 
-  // Category filter
-  if (category) {
-    query.category = category;
-  }
+    // Category check
+    if (category) {
+        filter.category = category;
+    }
 
-  // Search filter (title, location, country)
-  if (search) {
-    query.$or = [
-      { title: { $regex: search, $options: "i" } },
-      { location: { $regex: search, $options: "i" } },
-      { country: { $regex: search, $options: "i" } },
-    ];
-  }
-  console.log("Query:", query);
-  const alllistings = await Listing.find(query);
+    // Search check (Title, Location, Country sab search hoga)
+    if (search) {
+        filter.$or = [
+            { title: { $regex: search, $options: "i" } },
+            { location: { $regex: search, $options: "i" } },
+            { country: { $regex: search, $options: "i" } },
+        ];
+    }
 
-  res.render("listings/index.ejs", { alllistings, category, search });
+    const alllistings = await Listing.find(filter);
+    res.render("listings/index.ejs", { alllistings, category, search });
 };
-
-
-module.exports.renderNewForm = (req,res)=>{
+// Yeh wala function aapki controller file mein missing hai:
+module.exports.renderNewForm = (req, res) => {
     res.render("listings/new.ejs");
 };
-
-
-
-
-// MODIFY NEW
+// 2. SHOW ROUTE (Map + Nearby Listings)
 module.exports.showListing = async (req, res) => {
     let { id } = req.params;
 
@@ -51,21 +45,19 @@ module.exports.showListing = async (req, res) => {
         return res.redirect("/listings");
     }
 
-    // 🔥 Nearby Similar Listings Logic
-    const nearbyListings = await Listing.find({
-        _id: { $ne:listing._id }, // current listing exclude
-        category: listing.category,
-        price: {
-            $gte: listing.price - 500,
-            $lte: listing.price + 500
-        },
-        geometry: {
-            $near: {
-                $geometry: listing.geometry,
-                $maxDistance: 100000 // 100km radius
+    // Nearby Similar Listings (Optimization)
+    let nearbyListings = [];
+    if (listing.geometry && listing.geometry.coordinates) {
+        nearbyListings = await Listing.find({
+            _id: { $ne: listing._id }, 
+            geometry: {
+                $near: {
+                    $geometry: listing.geometry,
+                    $maxDistance: 50000 // 50km radius
+                }
             }
-        }
-    }).limit(5);
+        }).limit(3);
+    }
 
     res.render("listings/show.ejs", { 
         listing, 
@@ -74,70 +66,48 @@ module.exports.showListing = async (req, res) => {
     });
 };
 
-
-
-
-module.exports.createListing = async (req, res,next) => {
-    // 1. Location ko coordinates mein badlein (Geocoding)
+// 3. CREATE ROUTE (Geocoding included)
+module.exports.createListing = async (req, res, next) => {
     let response = await geocodingClient.forwardGeocode({
         query: req.body.listing.location,
         limit: 1
     }).send();
 
-    const listingData = req.body.listing;
-    let url = req.file.path;
-    let filename = req.file.filename;
-
-    const newListing = new Listing(listingData);
+    const newListing = new Listing(req.body.listing);
     newListing.owner = req.user._id;
-    newListing.image = { url, filename };
+    
+    if (typeof req.file !== "undefined") {
+        newListing.image = { url: req.file.path, filename: req.file.filename };
+    }
 
-    // 2. Geometry data (coordinates) save karein
-    // Ensure aapke Schema mein 'geometry' field ho
-    newListing.geometry = response.body.features[0].geometry;
+    // Geometry data save
+    if (response.body.features.length > 0) {
+        newListing.geometry = response.body.features[0].geometry;
+    }
 
     await newListing.save();
     req.flash("success", "New Listing Created!");
     res.redirect("/listings");
 };
 
-
-
-
-
-module.exports.renderEditForm = async(req,res)=>{
-    let {id}=req.params;
+// 4. EDIT FORM
+module.exports.renderEditForm = async(req, res) => {
+    let { id } = req.params;
     const listing = await Listing.findById(id);
-    if(!listing){
-        req.flash("error","Listing you requested for does not exist!");
+    if(!listing) {
+        req.flash("error", "Listing not found!");
         return res.redirect("/listings");
     }
     let orignalImageUrl = listing.image.url;
-    orignalImageUrl=orignalImageUrl.replace("/upload","/upload/h_300,w_250");
-    res.render("listings/edit.ejs",{listing,orignalImageUrl});
-}
+    orignalImageUrl = orignalImageUrl.replace("/upload", "/upload/w_250");
+    res.render("listings/edit.ejs", { listing, orignalImageUrl });
+};
 
-
-
-
+// 5. UPDATE ROUTE
 module.exports.updateListing = async (req, res) => {
     const { id } = req.params;
-    
-    // 1. Purana data find karein update se pehle
-    let listing = await Listing.findById(id);
-    if (!listing) {
-        req.flash("error", "Listing not found");
-        return res.redirect("/listings");
-    }
+    let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
 
-    // 2. Text data update karein (Price, Location, etc.)
-    // Yahan 'listing' variable ko firse declare nahi karna hai (let/const hata dein)
-    listing = await Listing.findByIdAndUpdate(
-    id,
-    { ...req.body.listing },
-    { new: true }
-    );
-    // 3. Image update handling (Agar nayi file upload hui hai)
     if (typeof req.file !== "undefined") {
         let url = req.file.path;
         let filename = req.file.filename;
@@ -149,15 +119,10 @@ module.exports.updateListing = async (req, res) => {
     res.redirect(`/listings/${id}`);
 };
 
-
-
-
-
-
-module.exports.destroyListing = async(req,res)=>{
-    let {id} = req.params;
-    let deletedListing=await Listing.findByIdAndDelete(id);
-    console.log(deletedListing);
-    req.flash("success","Listing Deleted");
+// 6. DELETE ROUTE
+module.exports.destroyListing = async(req, res) => {
+    let { id } = req.params;
+    await Listing.findByIdAndDelete(id);
+    req.flash("success", "Listing Deleted");
     res.redirect("/listings");
-}
+};
