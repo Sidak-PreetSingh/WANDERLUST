@@ -5,7 +5,7 @@ module.exports.renderSignupForm = (req,res)=>{
 };
 
 
-module.exports.signup = async (req, res) => {
+module.exports.signup = async (req, res,next) => {
     try {
         const { username, email, password } = req.body;
 
@@ -15,7 +15,7 @@ module.exports.signup = async (req, res) => {
         });
 
         // 🚫 BLOCK if too many accounts
-        if (existingIPUsers >= 3) {
+        if (existingIPUsers >= 100) {
             req.flash("error", "Too many accounts created from this IP.");
             return res.redirect("/signup");
         }
