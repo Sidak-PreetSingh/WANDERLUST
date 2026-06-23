@@ -54,7 +54,20 @@
           <a class="nav-link" href="/login"><b>Log in</b></a> 
         <% } %> 
 
-        <% if(locals.currUser) { %>  <a class="nav-link" href="/logout"><b>Log out</b></a>
+        <% if(!locals.currUser) { %>
+  <a class="nav-link" href="/signup"><b>Sign up</b></a>
+  <a class="nav-link" href="/login"><b>Log in</b></a> 
+<% } else { %>
+  <div class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+      <i class="fa-solid fa-user"></i> <%= locals.currUser.username %>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li><a class="dropdown-item" href="/logout">Log out</a></li>
+    </ul>
+  </div>
+<% } %>
+
         <% } %>
       </div>
     </div>
