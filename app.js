@@ -147,6 +147,17 @@ app.use((req, res, next) => {
 
 
 
+// new content 
+app.get("/seed", async (req, res) => {
+    try {
+        const { initdb } = require("./init/index.js");
+        await initdb();
+        res.send("Database seeded! <a href='/listings'>Go to listings</a>");
+    } catch (err) {
+        res.send("Seed failed: " + err.message);
+    }
+});
+
 
 
 
