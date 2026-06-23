@@ -20,8 +20,6 @@
   }
 </style>
 
-
-
 <nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top">
   <div class="container-fluid">
     <a class="navbar-brand" href="/listings"><i class="fa-regular fa-compass"></i></a>
@@ -35,39 +33,31 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
-        
         <a class="nav-link" href="/listings">Explore</a>
-       
       </div>
       <div class="navbar-nav ms-auto">
         <form class="d-flex" role="search" method="GET" action="/listings">
           <input class="form-control me-2 search-inp" type="search" name="search" placeholder="Search destinations"/>
           <button class="btn search-btn" type="submit">
             <i class="fa-solid fa-magnifying-glass"></i>
-            Search</button>
+            Search
+          </button>
         </form>
       </div>
       <div class="navbar-nav ms-auto">
-         <a class="nav-link" href="/listings/new">Add new Listing</a>
+        <a class="nav-link" href="/listings/new">Add new Listing</a>
         <% if(!locals.currUser) { %>
           <a class="nav-link" href="/signup"><b>Sign up</b></a>
           <a class="nav-link" href="/login"><b>Log in</b></a> 
-        <% } %> 
-
-        <% if(!locals.currUser) { %>
-  <a class="nav-link" href="/signup"><b>Sign up</b></a>
-  <a class="nav-link" href="/login"><b>Log in</b></a> 
-<% } else { %>
-  <div class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-      <i class="fa-solid fa-user"></i> <%= locals.currUser.username %>
-    </a>
-    <ul class="dropdown-menu dropdown-menu-end">
-      <li><a class="dropdown-item" href="/logout">Log out</a></li>
-    </ul>
-  </div>
-<% } %>
-
+        <% } else { %>
+          <div class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              <i class="fa-solid fa-user"></i> <%= locals.currUser.username %>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/logout">Log out</a></li>
+            </ul>
+          </div>
         <% } %>
       </div>
     </div>
