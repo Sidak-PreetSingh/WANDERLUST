@@ -18,9 +18,10 @@ router
   .get(userController.renderLoginForm)
   .post(saveRedirectUrl,
     passport.authenticate("local",{
-      failureRedirect:"/login",
-      failureFlash: true,
-  }),
+    failureRedirect:"/login",
+    failureFlash: true,
+    keepSessionInfo: true,
+}),
   userController.login
 );
 router.get("/admin/flagged-users", async (req, res) => {
