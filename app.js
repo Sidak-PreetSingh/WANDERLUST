@@ -5,6 +5,7 @@ if(process.env.NODE_ENV != "production"){
 
 const express = require("express");
 const app = express();
+app.set("trust proxy", 1);
 const mongoose = require("mongoose");
 const path = require("path");
 const methodOverride = require("method-override");
@@ -98,7 +99,9 @@ const sessionOptions = {
     saveUninitialized: false,
     cookie:{
         maxAge: 7*24*60*60*1000,
-        httpOnly: true
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax"
     }
 };
 
