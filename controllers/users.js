@@ -35,10 +35,13 @@ module.exports.signup = async (req, res,next) => {
         const registeredUser = await User.register(newUser, password);
 
         req.login(registeredUser, (err) => {
-            if (err) return next(err);
-            req.flash("success", "Welcome to Wanderlust!");
-            res.redirect("/listings");
-        });
+    if (err) return next(err);
+    req.session.save((saveErr) => {
+        if (saveErr) return next(saveErr);
+        req.flash("success", "Welcome to Wanderlust!");
+        res.redirect("/listings");
+    });
+});
 
     } catch (e) {
         req.flash("error", e.message);
@@ -51,14 +54,13 @@ module.exports.renderLoginForm = (req,res)=>{
     res.render("users/login.ejs");
 };
 
-
-
 module.exports.login = async(req,res)=>{
     req.flash("success","Welcome back to Wanderlust!");
     let redirectUrl = res.locals.redirectUrl || "/listings";
-    res.redirect(redirectUrl);
+    req.session.save((err) => {
+        res.redirect(redirectUrl);
+    });
 };
-
 
 
 module.exports.logout = (req,res)=>{
